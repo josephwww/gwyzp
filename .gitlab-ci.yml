@@ -1,0 +1,21 @@
+# GitLab CI：需要带 macos 标签的 Apple Silicon runner（自建 macOS 机器注册为 GitLab Runner）。
+# 若在没有该标签 runner 的 GitLab 实例上使用，以下任务会一直 pending，属预期行为。
+# 推荐路径仍是 GitHub Actions 的 macos-15 托管 runner（见 .github/workflows/build.yml）。
+
+stages: [test, build]
+
+test:
+  stage: test
+  tags: [macos]
+  script:
+    - swift test
+
+build:
+  stage: build
+  tags: [macos]
+  script:
+    - swift build -c release --arch arm64
+    - bash scripts/make-app-bundle.sh
+  artifacts:
+    paths:
+      - dist/
