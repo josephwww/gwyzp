@@ -14,7 +14,7 @@ build:
   stage: build
   tags: [macos]
   script:
-    - swift build -c release --arch arm64
+    - swift build -c release --arch arm64 --arch x86_64
     - bash scripts/make-app-bundle.sh
   artifacts:
     paths:

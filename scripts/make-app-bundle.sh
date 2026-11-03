@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# 把 swift build 产物组装成 .app 并打 zip 包（Apple Silicon / arm64）。
+# 把 swift build 产物组装成 .app 并打 zip 包（universal2：Apple Silicon + Intel）。
 set -euo pipefail
 
 APP_NAME="照片处理工具"
 BUNDLE_ID="com.josephwww.phototool"
 VERSION="1.0.0"
-BIN=".build/release/PhotoTool"
-ZIP="dist/PhotoTool-macOS-arm64.zip"
+# 多架构 (--arch) 构建产物在 .build/apple/Products/Release，单架构在 .build/release
+BIN=".build/apple/Products/Release/PhotoTool"
+[[ -f "$BIN" ]] || BIN=".build/release/PhotoTool"
+ZIP="dist/PhotoTool-macOS-universal2.zip"
 
 if [[ ! -f "$BIN" ]]; then
-  echo "未找到 $BIN，请先运行: swift build -c release --arch arm64" >&2
+  echo "未找到构建产物，请先运行: swift build -c release --arch arm64 --arch x86_64" >&2
   exit 1
 fi
 
@@ -42,3 +44,4 @@ codesign --force --sign - "dist/${APP_NAME}.app"
 ditto -c -k --keepParent "dist/${APP_NAME}.app" "$ZIP"
 
 echo "已生成 dist/${APP_NAME}.app 与 ${ZIP}"
+echo "包含架构: $(lipo -archs "dist/${APP_NAME}.app/Contents/MacOS/PhotoTool")"

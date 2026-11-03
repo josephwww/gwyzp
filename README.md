@@ -1,6 +1,7 @@
-# 照片处理工具（macOS · Apple Silicon 原生）
+# 照片处理工具（macOS · 通用二进制：Apple Silicon + Intel）
 
-考试**报名照片处理工具**的 macOS 移植版，适配 M 系列（arm64）芯片。功能规格完整复刻自
+考试**报名照片处理工具**的 macOS 移植版，**通用二进制（universal2）**——同一份 `.app`
+同时适配 M 系列（arm64）和 Intel（x86_64）芯片。功能规格完整复刻自
 Windows 原版（PhotoProcess 1.0，MFC + OpenCV 1.0）：选择证件照 → 自动校验 → 裁剪压缩为
 约 10KB 的标准一寸照 `报名照片.JPG`。
 
@@ -28,15 +29,16 @@ Windows 原版（PhotoProcess 1.0，MFC + OpenCV 1.0）：选择证件照 → �
 需要 macOS 13+ 与 Xcode 命令行工具（本仓库是 SwiftPM 工程，无需 .xcodeproj）：
 
 ```sh
-swift test                          # PhotoCore 单元测试
-swift build -c release --arch arm64 # 构建 arm64
-bash scripts/make-app-bundle.sh     # 组装 照片处理工具.app + zip
+swift test                                            # PhotoCore 单元测试
+swift build -c release --arch arm64 --arch x86_64     # 构建 universal2（arm64 + Intel）
+bash scripts/make-app-bundle.sh                       # 组装 照片处理工具.app + zip
 ```
 
 ### CI 构建（推荐）
 
 - **GitHub Actions**（`.github/workflows/build.yml`）：push 到 `main` 即在 GitHub 托管的
-  **Apple Silicon runner（macos-15）** 上跑测试、构建并上传产物 `PhotoTool-macOS-arm64.zip`；
+  **Apple Silicon runner（macos-15）** 上跑测试、构建 universal2 并上传产物
+  `PhotoTool-macOS-universal2.zip`（同时含 arm64 与 x86_64，Intel Mac 直接可用）；
   打 `v*` tag 会自动发布 Release。私有仓库注意 macOS runner 按 10 倍分钟计费。
 - **GitLab CI**（`.gitlab-ci.yml`）：需要自建的、带 `macos` 标签的 Apple Silicon runner。
 

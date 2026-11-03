@@ -16,8 +16,8 @@ jobs:
       - name: 单元测试 (PhotoCore)
         run: swift test
 
-      - name: 构建 (arm64 release)
-        run: swift build -c release --arch arm64
+      - name: 构建 (universal2: arm64 + x86_64)
+        run: swift build -c release --arch arm64 --arch x86_64
 
       - name: 组装 .app 与 zip
         run: bash scripts/make-app-bundle.sh
@@ -25,13 +25,13 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: PhotoTool-macOS-arm64
-          path: dist/PhotoTool-macOS-arm64.zip
+          name: PhotoTool-macOS-universal2
+          path: dist/PhotoTool-macOS-universal2.zip
 
       - name: 打 tag 时发布 Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" dist/PhotoTool-macOS-arm64.zip \
+          gh release create "${GITHUB_REF_NAME}" dist/PhotoTool-macOS-universal2.zip \
             --title "${GITHUB_REF_NAME}" --generate-notes
