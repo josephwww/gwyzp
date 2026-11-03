@@ -5,6 +5,9 @@ import PhotoCore
 import UniformTypeIdentifiers
 import Vision
 
+// macOS QuickDraw（经 AppKit 间接引入）也导出 RGBColor；本文件固定使用 PhotoCore 的定义。
+private typealias RGBColor = PhotoCore.RGBColor
+
 @MainActor
 final class PhotoToolModel: ObservableObject {
     @Published var previewImage: NSImage?
