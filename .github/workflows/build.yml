@@ -16,7 +16,7 @@ jobs:
       - name: 单元测试 (PhotoCore)
         run: swift test
 
-      - name: 构建 (universal2: arm64 + x86_64)
+      - name: "构建 universal2（arm64 + x86_64）"
         run: swift build -c release --arch arm64 --arch x86_64
 
       - name: 组装 .app 与 zip
