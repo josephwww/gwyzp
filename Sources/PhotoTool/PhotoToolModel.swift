@@ -5,9 +5,6 @@ import PhotoCore
 import UniformTypeIdentifiers
 import Vision
 
-// macOS QuickDraw（经 AppKit 间接引入）也导出 RGBColor；本文件固定使用 PhotoCore 的定义。
-private typealias RGBColor = PhotoCore.RGBColor
-
 @MainActor
 final class PhotoToolModel: ObservableObject {
     @Published var previewImage: NSImage?
@@ -37,14 +34,19 @@ final class PhotoToolModel: ObservableObject {
         previewImage = nil
         faceBox = nil
 
-        // 1. 格式：JPG/JPEG（原版按扩展名，这里扩展名 + 实际编码双重校验）
+        // 1. 格式：JPG/JPEG（扩展名 + 文件头 JPEG 魔数 FF D8 双重校验）
         guard FormatCheck.isJPEGFileExtension(url.pathExtension) else {
+            reject(PhotoMessages.notJPEG)
+            return
+        }
+        guard let header = try? Data(contentsOf: url, options: .mappedIfSafe).prefix(2),
+              header == Data([0xFF, 0xD8])
+        else {
             reject(PhotoMessages.notJPEG)
             return
         }
         guard
             let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-            (CGImageSourceCopyTypeIdentifier(source) as String?) == FormatCheck.jpegTypeIdentifier,
             let image = CGImageSourceCreateImageAtIndex(
                 source, 0, [kCGImageSourceShouldCache: false] as CFDictionary)
         else {
@@ -171,7 +173,7 @@ enum FaceDetection {
         } catch {
             return []
         }
-        guard let results = request.results as? [VNFaceObservation] else { return [] }
+        let results = request.results
         return results
             .map {
                 NormalizedFaceBox(
@@ -207,20 +209,20 @@ struct PixelSampler {
         self.height = height
     }
 
-    func rgba(x: Int, y: Int) -> RGBColor {
+    func rgba(x: Int, y: Int) -> PhotoCore.RGBColor {
         let pixels = context.data!.assumingMemoryBound(to: UInt8.self)
         let idx = (y * width + x) * 4
-        return RGBColor(
+        return PhotoCore.RGBColor(
             r: Double(pixels[idx]) / 255.0,
             g: Double(pixels[idx + 1]) / 255.0,
             b: Double(pixels[idx + 2]) / 255.0)
     }
 
     /// 边框环采样：四周各取 bandFraction 宽的环形区域。
-    func borderRingSamples(bandFraction: Double) -> [RGBColor] {
+    func borderRingSamples(bandFraction: Double) -> [PhotoCore.RGBColor] {
         let bw = max(1, Int((Double(width) * bandFraction).rounded()))
         let bh = max(1, Int((Double(height) * bandFraction).rounded()))
-        var samples: [RGBColor] = []
+        var samples: [PhotoCore.RGBColor] = []
         for x in 0..<width {
             for y in 0..<bh {
                 samples.append(rgba(x: x, y: y))
