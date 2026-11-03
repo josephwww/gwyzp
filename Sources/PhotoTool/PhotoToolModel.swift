@@ -173,7 +173,7 @@ enum FaceDetection {
         } catch {
             return []
         }
-        let results = request.results
+        let results = request.results ?? []
         var boxes: [NormalizedFaceBox] = []
         for observation in results {
             let bb: CGRect = observation.boundingBox
