@@ -174,15 +174,17 @@ enum FaceDetection {
             return []
         }
         let results = request.results
-        return results
-            .map {
+        var boxes: [NormalizedFaceBox] = []
+        for observation in results {
+            let bb: CGRect = observation.boundingBox
+            boxes.append(
                 NormalizedFaceBox(
-                    x: Double($0.boundingBox.minX),
-                    y: Double($0.boundingBox.minY),
-                    width: Double($0.boundingBox.width),
-                    height: Double($0.boundingBox.height))
-            }
-            .sorted { $0.area > $1.area }
+                    x: Double(bb.origin.x),
+                    y: Double(bb.origin.y),
+                    width: Double(bb.size.width),
+                    height: Double(bb.size.height)))
+        }
+        return boxes.sorted { $0.area > $1.area }
     }
 }
 
