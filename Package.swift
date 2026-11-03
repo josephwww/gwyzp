@@ -14,7 +14,8 @@ let package = Package(
         .executableTarget(
             name: "PhotoTool",
             dependencies: ["PhotoCore"],
-            path: "Sources/PhotoTool"
+            path: "Sources/PhotoTool",
+            resources: [.copy("Resources")]
         ),
         .testTarget(
             name: "PhotoCoreTests",

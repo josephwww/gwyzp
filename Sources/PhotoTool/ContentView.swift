@@ -1,85 +1,131 @@
 import PhotoCore
 import SwiftUI
 
+/// 原版 interface00.bmp 皮肤（701×488）的实测区域坐标。
+private enum SkinLayout {
+    static let windowWidth: CGFloat = 701
+    static let windowHeight: CGFloat = 488
+    /// 照片显示区（皮肤上自带样例人像，载入合格照片后覆盖显示）。
+    static let displayRect = CGRect(x: 112, y: 172, width: 214, height: 272)
+    /// 右侧三个按钮位（皮肤从上到下：绿 / 红 / 金，图内已烙有原版文字）。
+    static let buttonWidth: CGFloat = 200
+    static let buttonHeight: CGFloat = 66
+    static let buttonCenterX: CGFloat = 473
+    static let greenY: CGFloat = 216
+    static let redY: CGFloat = 304
+    static let goldY: CGFloat = 392
+    /// 顶部红带内的标题与说明行位置。
+    static let titlePosition = CGPoint(x: 110, y: 32)
+    static let captionPosition = CGPoint(x: 252, y: 158)
+}
+
+private enum SkinAssets {
+    private static func load(_ name: String) -> NSImage {
+        let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Resources")
+            ?? Bundle.module.url(forResource: name, withExtension: "png")
+        guard let url, let image = NSImage(contentsOf: url) else { return NSImage() }
+        return image
+    }
+
+    static let skin = load("skin")
+    static let open = load("button-green")
+    static let exit = load("button-red")
+    static let save = load("button-gold")
+    static let saveDisabled = load("button-gray")
+}
+
 struct ContentView: View {
     @StateObject private var model = PhotoToolModel()
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            photoArea
-            Divider()
-            controls
+        ZStack {
+            Image(nsImage: SkinAssets.skin)
+                .resizable()
+                .frame(width: SkinLayout.windowWidth, height: SkinLayout.windowHeight)
+
+            Text("照片处理工具")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundStyle(.white)
+                .position(SkinLayout.titlePosition)
+
+            Text("请选择本人近期免冠正面证件照片（蓝底或白底，宽≥295、高≥413像素）")
+                .font(.system(size: 12))
+                .foregroundStyle(Color(white: 0.35))
+                .position(SkinLayout.captionPosition)
+
+            photoDisplay
+            openButton
+            saveButton
+            exitButton
         }
-        .frame(minWidth: 720, minHeight: 540)
+        .frame(width: SkinLayout.windowWidth, height: SkinLayout.windowHeight)
         .alert(PhotoMessages.saveTitle, isPresented: $model.showSavedAlert) {
             Button("退出") {
                 NSApp.terminate(nil)
             }
-            Button("继续使用", role: .cancel) {}
+            Button("取消", role: .cancel) {}
         } message: {
             Text(PhotoMessages.savedAskExit)
         }
-    }
-
-    /// 复刻原版 interface00.bmp 的红色标题栏（#DD3A3E）。
-    private var header: some View {
-        ZStack {
-            Rectangle().fill(Color(red: 0.867, green: 0.227, blue: 0.243))
-            HStack {
-                Text("照片处理工具")
-                    .font(.title2.bold())
-                    .foregroundStyle(.white)
-                Spacer()
-                Text("报名照片处理工具")
-                    .font(.callout)
-                    .foregroundStyle(.white.opacity(0.85))
-            }
-            .padding(.horizontal, 20)
+        .alert("照片处理工具", isPresented: $model.showError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(model.errorMessage)
         }
-        .frame(height: 64)
     }
 
-    private var photoArea: some View {
+    /// 载入合格照片后覆盖皮肤上的样例人像。
+    private var photoDisplay: some View {
         Group {
             if let image = model.previewImage {
                 Image(nsImage: image)
                     .resizable()
-                    .scaledToFit()
-                    .padding(16)
+                    .aspectRatio(contentMode: .fill)
             } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "person.crop.rectangle")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.secondary)
-                    Text("照片显示区域")
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Color.clear
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: SkinLayout.displayRect.width, height: SkinLayout.displayRect.height)
+        .clipped()
+        .position(
+            x: SkinLayout.displayRect.midX,
+            y: SkinLayout.displayRect.midY)
     }
 
-    private var controls: some View {
-        VStack(spacing: 12) {
-            Text(model.statusMessage)
-                .foregroundStyle(model.statusIsError ? Color.red : Color.green)
-                .frame(maxWidth: .infinity, minHeight: 18)
-            HStack(spacing: 24) {
-                Button("打开照片文件") {
-                    model.openPhoto()
-                }
-                .buttonStyle(.borderedProminent)
-                Button("保存照片文件") {
-                    model.savePhoto()
-                }
-                .buttonStyle(.bordered)
-                .disabled(!model.canSave)
-            }
+    private var openButton: some View {
+        Button {
+            model.openPhoto()
+        } label: {
+            Image(nsImage: SkinAssets.open)
+                .resizable()
+                .frame(width: SkinLayout.buttonWidth, height: SkinLayout.buttonHeight)
         }
-        .padding(20)
+        .buttonStyle(.plain)
+        .position(x: SkinLayout.buttonCenterX, y: SkinLayout.greenY)
+    }
+
+    private var saveButton: some View {
+        Button {
+            model.savePhoto()
+        } label: {
+            Image(nsImage: model.canSave ? SkinAssets.save : SkinAssets.saveDisabled)
+                .resizable()
+                .frame(width: SkinLayout.buttonWidth, height: SkinLayout.buttonHeight)
+        }
+        .buttonStyle(.plain)
+        .disabled(!model.canSave)
+        .position(x: SkinLayout.buttonCenterX, y: SkinLayout.goldY)
+    }
+
+    private var exitButton: some View {
+        Button {
+            NSApp.terminate(nil)
+        } label: {
+            Image(nsImage: SkinAssets.exit)
+                .resizable()
+                .frame(width: SkinLayout.buttonWidth, height: SkinLayout.buttonHeight)
+        }
+        .buttonStyle(.plain)
+        .position(x: SkinLayout.buttonCenterX, y: SkinLayout.redY)
     }
 }

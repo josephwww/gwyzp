@@ -6,6 +6,7 @@ struct PhotoToolApp: App {
         WindowGroup("照片处理工具") {
             ContentView()
         }
+        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
     }
 }

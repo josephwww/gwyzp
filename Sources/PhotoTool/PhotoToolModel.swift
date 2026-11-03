@@ -8,10 +8,10 @@ import Vision
 @MainActor
 final class PhotoToolModel: ObservableObject {
     @Published var previewImage: NSImage?
-    @Published var statusMessage = ""
-    @Published var statusIsError = false
     @Published var canSave = false
     @Published var showSavedAlert = false
+    @Published var showError = false
+    @Published var errorMessage = ""
 
     private var sourceImage: CGImage?
     private var faceBox: NormalizedFaceBox?
@@ -97,8 +97,6 @@ final class PhotoToolModel: ObservableObject {
         faceBox = face
         previewImage = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height))
         canSave = true
-        statusIsError = false
-        statusMessage = "照片符合要求，可以保存。"
     }
 
     // MARK: - 保存照片
@@ -135,17 +133,14 @@ final class PhotoToolModel: ObservableObject {
             return
         }
         canSave = false
-        statusIsError = false
-        statusMessage =
-            "已保存 \(url.lastPathComponent)（\(Int(PhotoConfig.outputWidthPixels))×\(Int(PhotoConfig.outputHeightPixels))，\(encoded.data.count) 字节，质量 \(String(format: "%.2f", encoded.quality))）"
         showSavedAlert = true
     }
 
     // MARK: - 私有
 
     private func reject(_ message: String) {
-        statusIsError = true
-        statusMessage = message
+        errorMessage = message
+        showError = true
     }
 
     /// Vision 归一化（原点左下）→ CGImage 像素坐标（原点左上）。
